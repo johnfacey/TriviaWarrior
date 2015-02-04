@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute" 
+	initialize="initCollections()" 
+	backgroundColor="#fbf6e1" 
+	xmlns:views="com.views.*" viewSourceURL="srcview/index.html">
+
+	<mx:Script>
+        <![CDATA[
+        	import com.views.SampleTitleWindow;
+            import mx.events.MenuEvent;
+            import mx.controls.Alert;
+            import mx.collections.*;
+            import mx.managers.PopUpManager;
+            import mx.controls.Alert;
+            
+            public function openWindow():void
+            {
+            	PopUpManager.createPopUp(this,SampleTitleWindow,false);
+            }
+            
+            public function showAlert():void
+            {
+				Alert.show("This is a sample Alert.","Alert");              
+            }
+
+            [Bindable]
+            public var menuBarCollection:XMLListCollection;
+    
+            private var menubarXML:XMLList =
+                <>
+                    <menuitem label="Menu1" data="top">
+                        <menuitem label="MenuItem 1-A" data="1A"/>
+                        <menuitem label="MenuItem 1-B" data="1B"/>
+                    </menuitem>
+                    <menuitem label="Menu2" data="top">
+                        <menuitem label="MenuItem 2-A" type="check"  data="2A"/>
+                        <menuitem type="separator"/>
+                        <menuitem label="MenuItem 2-B" >
+                            <menuitem label="SubMenuItem 3-A" type="radio"
+                                groupName="one" data="3A"/>
+                            <menuitem label="SubMenuItem 3-B" type="radio"
+                                groupName="one" data="3B"/>
+                        </menuitem>
+                    </menuitem>
+                </>;
+
+            // Event handler to initialize the MenuBar control.
+            private function initCollections():void {
+                menuBarCollection = new XMLListCollection(menubarXML);
+            }
+         ]]>
+    </mx:Script>
+    
+    <mx:Style source="assets/css/Main.css" />
+
+	<mx:MenuBar top="-1" right="0" left="0" height="32" dataProvider="{ menuBarCollection }" labelField="@label"/>
+	<mx:Panel width="800" height="450" layout="absolute" horizontalCenter="0" title="Flex skinning Rocks"  y="120">
+		<mx:ViewStack id="viewStack" x="0" y="0" width="100%" height="100%">
+			<views:Controls label="Controls" width="100%" />
+			<views:Controls2 label="Controls 2" width="100%" />
+			<views:Navigation label="Navigation" width="100%" height="100%"/>
+			<views:Lists label="Lists" width="100%" />
+		</mx:ViewStack>
+		<mx:ControlBar>
+			<mx:ToggleButtonBar styleName="controlBarToogleBar" dataProvider="{viewStack}"/>
+			<mx:Spacer width="100%"/>
+			<mx:Button label="Alert" click="showAlert()"/>
+			<mx:Button label="TitleWindow" click="openWindow()"/>
+		</mx:ControlBar>
+	</mx:Panel>
+	
+</mx:Application>

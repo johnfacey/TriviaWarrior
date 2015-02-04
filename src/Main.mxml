@@ -1,0 +1,549 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="640" height="480"  preloader="MochiPreloader" applicationComplete="complete()" >
+	<!--<mx:Style source="xan.css"/>-->
+	<mx:Style source="assets/css/Main.css" />
+	<mx:Panel id="PreloadPanel" x="0" y="0" width="640" height="480" layout="absolute" visible="true" title="Trivia Warrior">
+		<mx:Image source="@Embed('content/ninja-chars.png')"  id="ninjaChars" />
+		<mx:VBox x="50" y="275" >
+		<mx:HBox>
+			<mx:Button label="Start" width="156" height="33" click="startOver(triviaObjects,questionBox,answer0,answer1,answer2,answer3)" />
+			<mx:Button label="Instructions" width="156" height="33" click="callInstructions()" />
+			<mx:Button label="Credits" width="156" height="33" click="callCredits()" />
+			
+		</mx:HBox>
+		</mx:VBox>
+	</mx:Panel>
+	
+	<mx:Panel id="MochiAdPanel" x="0" y="-2" width="640" height="480" layout="absolute" visible="false">
+			
+		<mx:HBox>
+			
+		<mx:Panel title="You have 20 seconds to answer each question">
+			<mx:VBox>
+				<mx:TextArea id="questionBox" x="196" y="10" width="400" height="74"/>
+				<mx:Button id="answer0" x="10" y="256" label="Waiting..." width="400" click="answerQuestion(questionBox,answer0.label,startDate)" enabled="false" />
+				<mx:Button id="answer1" x="10" y="256" label="Waiting..." width="400" click="answerQuestion(questionBox,answer1.label,startDate)" enabled="false"/>
+				<mx:Button id="answer2" x="10" y="256" label="Waiting..." width="400" click="answerQuestion(questionBox,answer2.label,startDate)" enabled="false"/>
+				<mx:Button id="answer3" x="10" y="256" label="Waiting..." width="400" click="answerQuestion(questionBox,answer3.label,startDate)" enabled="false"/>
+				<mx:TextArea id="debugBox" x="196" y="10" width="400" height="50"/>
+			</mx:VBox>
+		</mx:Panel>
+		
+		<mx:VBox>
+			<mx:Panel title="Menu">
+				<mx:Label text="Score: " id="lblScore" color="white"></mx:Label>
+				<mx:Label text="Timer: " id="lblTimer" color="white"></mx:Label>
+				<mx:Button id="btnLeaderBoard" label="Show Leaderboard" width="150" click="showLeaderboard(event)" />
+				<mx:Button id="btnScore" label="Submit Score" width="150" click="submitScore()" enabled="false" />
+				<mx:Button id="zzz" label="Start Over" width="150" click="startOver(triviaObjects,questionBox, answer0, answer1, answer2, answer3)" />
+				<mx:Button id="vv" label="Toggle Music" width="150" click="toggleMusic()" />
+				
+				<mx:Button id="rr" label="Visit Blog" width="150" click="showBlog()" />
+				<mx:Button id="r" label="Visit Our Site" width="150" click="showSite()" />
+			</mx:Panel>
+			
+		</mx:VBox>
+		
+		
+		</mx:HBox>
+		
+
+	</mx:Panel>	
+	
+
+	
+	<mx:Script>
+		<![CDATA[
+			
+			import flash.display.MovieClip;
+			import mochi.as3.*;
+			import flash.net.URLLoader;
+			import flash.net.URLRequest;
+			import mx.controls.Alert;
+			import mx.utils.ArrayUtil;
+			import mx.core.Application;
+			import com.*;
+			import mx.controls.Label;
+            import mx.events.CloseEvent;
+            import mx.containers.TitleWindow;
+            import mx.managers.PopUpManager;
+
+			import mx.core.SoundAsset;
+			import flash.utils.Timer;
+
+			public static var _clip:MovieClip;
+			private var clickAwayMC:MovieClip;
+			private var INTER_OPTIONS:Object;
+			private var CLICKAWAY_OPTIONS:Object;
+			public static var triviaArray:Array;
+			public static var currentAnswerArray:Array;
+			public static var currentQuestionSelected:int;
+			public static var lastQuestionSelected:int;
+			public var currentAnswerSelected:int;
+			public static var score:int = 0;
+			public var counter:int = 0;
+			public var isMusicPlaying:int = 1;
+			public static var currentAnswer:String;
+			public static var triviaObjects:Array = new Array();
+			public var mochiServices:MochiServices = new MochiServices();
+			public var myTimer:Timer = new Timer(1000, 20); // 1 second
+			public static var startDate:Date = new Date();
+			public static var endDate:Date = new Date();
+			public static var playerName:String = new String("");
+			public var theTextField:TextField = new TextField();
+			private var titleWindow:TitleWindow;
+			[Embed(source="content/data.txt",mimeType="application/octet-stream")]
+			private static const Config:Class;
+			
+			[Embed(source="content/song3.mp3")]
+
+            [Bindable]
+            public var Song:Class;
+			
+			[Embed(source="content/punch1.mp3")]
+
+            [Bindable]
+            public var Punch:Class;
+			
+			[Embed(source="content/gong1.mp3")]
+
+            [Bindable]
+            public var Gong:Class;
+
+            public var mySong:SoundAsset = new Song() as SoundAsset;
+            public var channel:SoundChannel;
+			
+			public var myGong:SoundAsset = new Song() as SoundAsset;
+            public var channelGong:SoundChannel;
+			
+			public var myPunch:SoundAsset = new Song() as SoundAsset;
+            public var channelPunch:SoundChannel;
+			
+			var _mochiads_game_id:String = "843a25e5b3a68b19";
+			
+			public function toggleMusic():void {
+				if (isMusicPlaying == 1) {
+					isMusicPlaying = 0;
+					stopSound();
+					} else {
+						isMusicPlaying = 1;
+						playMusic();
+						}
+				}
+		
+		public function showBlog():void {
+			
+			var url:String = "http://triviawarrior.blogspot.com";
+			var request:URLRequest = new URLRequest(url);
+			try {
+			  navigateToURL(request, '_blank'); // second argument is target
+			} catch (e:Error) {
+			  trace("Error occurred!");
+			}
+
+		}
+		
+		public function showSite():void {
+			//Alert.show("Website Coming Soon...", "Trivia Warrior");
+			
+			//MochiScores.submit(Application.application.score, Application.application.txtPlayerName.text);
+			var boardID:String = "eaffd9ea0d92dc0b";
+					MochiScores.setBoardID(boardID); 
+					
+					//MochiScores.showLeaderboard( { res: "640x480", clip: _clip, boardID: boardID, score: score } );
+			var url:String = "http://www.gameinvite.me";
+			var request:URLRequest = new URLRequest(url);
+			try {
+			 navigateToURL(request, '_blank'); // second argument is target
+			// AndrogradeAPI.user.setStat("high score", Application.application.score, 0, null);
+			} catch (e:Error) {
+			  trace("Error occurred!");
+			}
+
+		}
+		
+		public function startOver(triviaObjects:Object,questionBox:Object,answer0:Object,answer1:Object,answer2:Object,answer3:Object):void {
+			playMusic();
+			triviaArray = new Array();
+				loadData();
+				score = 0;
+				lblScore.text = "Score: ";
+				answer0.enabled = true;
+				answer1.enabled = true;
+				answer2.enabled = true;
+				answer3.enabled = true;
+				Application.application.btnScore.enabled = false;
+				Application.application.counter = 0;
+			startTrivia(triviaObjects,questionBox, answer0, answer1, answer2, answer3);
+			
+				
+				
+			
+		}		
+		public function loadAPI():void {
+			
+			MochiBot.track(this, "598eed98");
+			var _mochiads_game_id:String = "843a25e5b3a68b19";
+		}
+			
+		public function callInstructions():void {
+			//Alert.show('Enter a name\nAnswer the questions\nGet a high score!', 'Trivia Warrior', Alert.OK);
+			PopUpManager.centerPopUp(PopUpManager.createPopUp(this,InsWindow,false));
+		}
+		
+		public function callCredits():void {
+			//Alert.show('Programming: Ion Games\n\thttp://ionburst.blogspot.com\n\nMusic:\n\thttp://www.liamtarpey.com', 'Trivia Warrior', Alert.OK);
+		 PopUpManager.centerPopUp(PopUpManager.createPopUp(this,AboutWindow,false));
+	     
+		}
+			
+			public function playMusic():void 
+            {
+
+                // Make sure we don't get multiple songs playing at the same time
+                stopSound();
+                
+                // Play the song on the channel
+                channel = mySong.play(0,100);
+            }
+            
+            public function stopSound():void 
+            {
+
+                // Stop the channel, but only if it exists
+                if ( channel != null ) channel.stop();
+            }
+			
+			public function playGong():void 
+            {
+
+                // Make sure we don't get multiple songs playing at the same time
+                stopGong();
+                
+                // Play the song on the channel
+                channelGong = myGong.play();
+            }
+            
+            public function stopGong():void 
+            {
+
+                // Stop the channel, but only if it exists
+                if ( channelGong != null ) channelGong.stop();
+            }
+			
+			public function playPunch():void 
+            {
+
+                // Make sure we don't get multiple songs playing at the same time
+                stopPunch();
+                
+                // Play the song on the channel
+                channel = myPunch.play();
+            }
+            
+            public function stopPunch():void 
+            {
+
+                // Stop the channel, but only if it exists
+                if ( channelPunch != null ) channelPunch.stop();
+            }
+
+			
+			public function loadData():void {
+			
+
+				myTimer.addEventListener(TimerEvent.TIMER, Application.application.runTick);
+				myTimer.addEventListener(TimerEvent.TIMER_COMPLETE, Application.application.runComplete);
+				
+				//playMusic();
+				
+				//Alert.show(getConfig(), 'title', Alert.OK);
+				triviaArray = getConfig().split("\n");
+		
+				triviaObjects = new Array();
+				for(var i:int = 0;i<triviaArray.length-1;i++){
+				//Alert.show('dataString', '0000000000000', Alert.OK);
+			
+				var triviaObject:TriviaObject = new TriviaObject();
+				
+					
+					var dataString:String = triviaArray[i];
+					
+					var dataArray:Array = dataString.split("|");
+					/*
+					triviaObject.id = dataArray[0];
+					triviaObject.group = dataArray[1];
+					triviaObject.question = dataArray[2];
+					triviaObject.answerArray[0] = dataArray[3];
+					triviaObject.answerArray[1] = dataArray[4];
+					triviaObject.answerArray[2] = dataArray[5];
+					triviaObject.answerArray[3] = dataArray[6];
+					*/
+					
+					triviaObject.id = dataArray[0];
+					triviaObject.group = dataArray[1];
+					triviaObject.question = dataArray[2];
+					triviaObject.answerArray[0] = dataArray[3];
+					triviaObject.answerArray[1] = dataArray[4];
+					triviaObject.answerArray[2] = dataArray[5];
+					triviaObject.answerArray[3] = dataArray[6];
+					
+					triviaObjects.push(triviaObject);
+			}
+			//loadAPI();
+//		
+		}
+					
+			/*
+				complete() is called via the ApplicationComplete event and sets up 
+				the MovieClip for the MochiAd Interlevel Ad. MovieClip objects
+				cannot be added as children to Flex containers, so you must use
+				a proxy UIComponent to hold the MovieClip.
+			
+				Since the clip holding the Ad is independent of your game, you must
+				start and stop gameplay yourself by using the ad_started and ad_finished
+				callbacks to the showInterLevelAd() and showPreGameAd() functions.
+			*/
+						
+			
+			
+			private function complete():void {
+				
+				_clip = new MovieClip();
+
+				MochiAdComponent.addChild(_clip);
+				
+				MochiAdPanel.title = "Trivia Warrior";
+				MochiServices.connect("843a25e5b3a68b19", _clip);
+//				unloadClickAwayButton.visible = false;
+				/*
+				INTER_OPTIONS = {clip:_clip, id:"test", res:MochiAdComponent.width + "x" + MochiAdComponent.height, 
+								 ad_loaded:function(w:Number, h:Number):void { status.text = status.text + w + "x" + h + " Interlevel Ad loaded\n" },
+								 ad_finished:function():void { status.text = status.text + "Interlevel Ad Finished Playing\n" }
+								 };
+*/
+	    		//MochiServices.connect("843a25e5b3a68b19", _clip);
+
+	            //MochiCoins.addEventListener(MochiCoins.ERROR, coinsError);
+	            //MochiCoins.addEventListener(MochiCoins.LOGGED_IN, coinsEvent);
+	            //MochiCoins.addEventListener(MochiCoins.ITEM_OWNED, coinsEvent);
+	            //MochiCoins.addEventListener(MochiCoins.STORE_ITEMS, storeItems);
+
+	            //MochiCoins.getStoreItems();
+	            //MochiCoins.hideLoginWidget();
+				
+				
+					//MochiAd.showPreGameAd({clip:root, id:"843a25e5b3a68b19", res:"550x400"});
+					MochiSocial.showLoginWidget({x:20, y:400})
+				loadData();
+				
+			}
+			      			
+			private function showLeaderboard(event:Event):void {
+				var boardID:String = "eaffd9ea0d92dc0b";
+					MochiScores.setBoardID(boardID);
+					MochiScores.showLeaderboard( { res: "640x400", clip: _clip } );
+
+			}
+			
+			private  function submitScore():void {
+				var boardID:String = "eaffd9ea0d92dc0b";
+					MochiScores.setBoardID(boardID);
+					MochiScores.showLeaderboard( { res: "640x400", clip: _clip, score: score } );
+
+			}
+			
+			private function showInterlevelAd(event:Event):void {
+				MochiAd.showInterLevelAd(INTER_OPTIONS);
+				
+			}
+
+	        private function showStore(ev:Object = null):void {
+	            MochiCoins.showStore({clip:_clip});
+	        }
+
+	        private function showItem(ev:Object = null):void {
+	            MochiCoins.showItem({x:150, y:150, item: "7eb8d3ef7793239b"});
+	        }
+
+	        private function showLogin(ev:Object = null):void {
+	            //MochiCoins.showLoginWidget({x:420, y:430});
+	        }
+
+	        private function hideLogin(ev:Object = null):void {
+	            //MochiCoins.hideLoginWidget();
+	        }
+
+	        private function coinsEvent(event:Object):void {
+	            trace("[GAME] [coinsEvent] " + event);
+	        }
+
+			public static function getConfig() : String
+			{
+				var data:String =  new Config() ;
+				//var xml:XML = new XML( ba.readUTFBytes( ba.length ) );
+       
+				return data;    
+			}
+			
+						
+			public static function shuffle(thisArray:Array, startIndex:int = 0, endIndex:int = 0):Array{
+				if(endIndex == 0) endIndex = thisArray.length-1;
+					for (var i:int = endIndex; i>startIndex; i--) {
+						var randomNumber:int = Math.floor(Math.random()*endIndex)+startIndex;
+						var tmp:* = thisArray[i];
+						thisArray[i] = thisArray[randomNumber];
+						thisArray[randomNumber] = tmp;
+					}
+				return thisArray;
+			}
+			
+			public function closeHandler(evt_obj:Object):void {
+				if (evt_obj.detail == Alert.YES) {
+					var boardID:String = "eaffd9ea0d92dc0b";
+					MochiScores.setBoardID(boardID); 
+					
+					MochiScores.showLeaderboard( { res: "640x480", clip: _clip, boardID: boardID, score: score } );
+					//scoreRequest.send();
+					
+				} else if (evt_obj.detail == Alert.NO) {
+					MochiScores.showLeaderboard( { res: "640x400", clip: _clip  } );
+				}
+			}
+			public function answerQuestion(questionBox:Object,answer:String,startDate:Date):void {
+			Application.application.answer0.enabled = false;
+			Application.application.answer1.enabled = false;
+			Application.application.answer2.enabled = false;
+			Application.application.answer3.enabled = false;
+			
+				
+			lastQuestionSelected = currentQuestionSelected;
+			 Application.application.myTimer.reset();
+			 Application.application.counter++;
+				var endDate:Date = new Date();	
+				//Alert.show('1', '1', Alert.OK);
+				var start:Number = startDate.getTime();
+				var end:Number = endDate.getTime();
+				
+				
+				var timeResult:Number = new Number();
+				timeResult = (end - start);
+				timeResult = (20000 - timeResult);
+				
+				//Alert.show('timeResult', ''+timeResult, Alert.OK);
+				if (currentAnswer == answer) {
+					//Alert.show('Response', 'You got it right', Alert.OK);
+					Application.application.debugBox.text = "" + counter + ": You got it right\n" + Application.application.debugBox.text;
+					score = score + (timeResult / 1000) + 100;
+					score = Math.abs(score);
+					lblScore.text = "Score: " + score;
+					//playPunch();
+				} else {
+					//Alert.show(currentAnswer, 'You got it wrong', Alert.OK);
+					Application.application.debugBox.text = "" + counter + ": You got it wrong\n" + Application.application.debugBox.text;
+					//playGong();
+					}
+					
+				
+					
+				triviaObjects.splice(currentQuestionSelected, 1);
+				
+				//askName();
+				if (triviaObjects.length == 1) {
+					//Alert.show('You got ' + score + ' right', 'Trivia Warrior', Alert.OK);
+					Application.application.answer0.enabled = false;
+					Application.application.answer1.enabled = false;
+					Application.application.answer2.enabled = false;
+					Application.application.answer3.enabled = false;
+					var boardID:String = "eaffd9ea0d92dc0b";
+					MochiScores.setBoardID(boardID);
+					
+					Application.application.btnScore.enabled = true;
+					Alert.show( "To send your score click on the Submit Score Button", "Trivia Warrior" );
+
+					//display score
+				} else {
+					Application.application.answer0.enabled = true;
+					Application.application.answer1.enabled = true;
+					Application.application.answer2.enabled = true;
+					Application.application.answer3.enabled = true;
+					startTrivia(triviaObjects,questionBox, answer0, answer1, answer2, answer3);
+				}
+			}
+			
+				
+			public function runComplete(event:TimerEvent):void {
+				myTimer.reset();
+				trace("runOnce() called @ " + getTimer() + " ms");
+				answerQuestion(questionBox, "",startDate);
+			}
+			
+			public function runTick(event:TimerEvent):void {
+				lblTimer.text = "Timer: " + (20 - event.target.currentCount);
+				
+			}
+
+			
+			
+			public static function startTrivia(triviaObjects:Object,questionBox:Object,answer0:Object,answer1:Object,answer2:Object,answer3:Object) : void
+			{
+
+					currentAnswerArray = new Array(4);
+					
+					 currentQuestionSelected = Math.ceil(Math.random() * triviaObjects.length);
+					 
+					 if (currentQuestionSelected == lastQuestionSelected) {
+						 currentQuestionSelected = Math.ceil(Math.random() * triviaObjects.length);
+					 }
+					 
+											
+					  questionBox.text = triviaObjects[currentQuestionSelected].question;
+					
+					 currentAnswerArray[0] = triviaObjects[currentQuestionSelected].answerArray[0];
+					 currentAnswerArray[1] = triviaObjects[currentQuestionSelected].answerArray[1];
+					 currentAnswerArray[2] = triviaObjects[currentQuestionSelected].answerArray[2];
+					 currentAnswerArray[3] = triviaObjects[currentQuestionSelected].answerArray[3];
+					
+					 currentAnswer = new String();
+					 
+					 currentAnswer = triviaObjects[currentQuestionSelected].answerArray[3];
+					 currentAnswer = triviaObjects[currentQuestionSelected].answerArray[0];
+				//unsort answers
+					currentAnswerArray = shuffle(currentAnswerArray, 0, 3);
+					
+					answer0.label = currentAnswerArray[0];
+					answer1.label = currentAnswerArray[1];
+					answer2.label = currentAnswerArray[2];
+					answer3.label = currentAnswerArray[3];
+				//display question
+				//receive answer
+				//check answer
+				
+				Application.application.PreloadPanel.setVisible(false);
+				Application.application.MochiAdPanel.setVisible(true);
+				
+				answer0.enabled = true;
+				answer1.enabled = true;
+				answer2.enabled = true;
+				answer3.enabled = true;
+				startDate = new Date();
+				
+				//Application.application.myTimer = new Timer(5000, 1);
+				//Application.application.myTimer.addEventListener(TimerEvent.TIMER, Application.application.runOnce);
+				
+				Application.application.myTimer.start();
+				
+			
+				
+			}	
+			
+		]]>
+	</mx:Script>
+	
+	
+	
+	
+	<mx:UIComponent id="MochiAdComponent" x="0" y="0">
+	</mx:UIComponent>
+
+</mx:Application>

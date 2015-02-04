@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+	 
+	<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	      layout="absolute" width="400" height="300" showCloseButton="true"
+	      close="PopUpManager.removePopUp(this)"
+	      mouseDownOutside="PopUpManager.removePopUp(this)" title="Instructions: Game Invite">
+	 
+	<mx:Script>
+	  <![CDATA[
+	           import mx.managers.PopUpManager;
+			   import mx.controls.*;
+	  ]]>
+	</mx:Script>
+	           <mx:Form xmlns:mx="http://www.adobe.com/2006/mxml">
+
+					
+				<mx:FormItem label="Instructions">
+						<mx:TextArea width="200" height="150">
+							<mx:htmlText>
+							A series of questions will be shown, select the correct answer from the available choices.
+							Click the X on this window to close.
+							</mx:htmlText>
+							
+						</mx:TextArea>
+					</mx:FormItem>
+				   
+				   </mx:Form>
+	</mx:TitleWindow>

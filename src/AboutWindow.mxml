@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+	 
+	<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml"
+	      layout="absolute" width="400" height="300" showCloseButton="true"
+	      close="PopUpManager.removePopUp(this)"
+	      mouseDownOutside="PopUpManager.removePopUp(this)" title="Credits: Game Invite">
+	 
+	<mx:Script>
+	  <![CDATA[
+	           import mx.managers.PopUpManager;
+	  ]]>
+	</mx:Script>
+	           <mx:Form xmlns:mx="http://www.adobe.com/2006/mxml">
+
+					
+				<mx:FormItem label="Developed By">
+						<mx:TextInput editable="false" text="Game Invite (http://www.gameinvite.me)"/>
+					</mx:FormItem>
+
+				<mx:FormItem label="Music By">
+						<mx:TextInput editable="false" text="Liam Tarpey (http://www.liamtarpey.com)"/>
+					</mx:FormItem>
+				
+				<mx:FormItem label="Close">
+						<mx:TextInput editable="false" text="Click the X on this window to close."/>
+					</mx:FormItem>	
+					
+				   
+				   </mx:Form>
+	</mx:TitleWindow>
